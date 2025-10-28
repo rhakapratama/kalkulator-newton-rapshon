@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator Newton–Raphson</title>
+
+<!-- Chart.js dan plugin annotation -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+
+<style>
+  body {
+    margin: 0;
+    font-family: "Poppins", sans-serif;
+    background: url("yaw.jpg") no-repeat center center fixed;
+    background-size: cover;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 40px 10px;
+  }
+
+  .container {
+    width: 90%;
+    max-width: 420px;
+    background: rgba(0, 0, 0, 0.65);
+    padding: 25px 30px;
+    border-radius: 15px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+  }
+
+  h1 {
+    text-align: center;
+    color: #00c8ff;
+    font-size: 1.5em;
+    margin-bottom: 15px;
+  }
+
+  h3 {
+    margin-top: 18px;
+    font-size: 1.05em;
+    color: #ffb84d;
+  }
+
+  label {
+    display: block;
+    margin-top: 8px;
+    color: #eee;
+    font-weight: 500;
+  }
+
+  input[type="number"], select {
+    width: 100%;
+    padding: 8px 10px;
+    margin-top: 4px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    font-size: 0.95em;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.3);
+  }
+
+  input[type="number"]:focus, select:focus {
+    outline: 1px solid #00c8ff;
+    background: rgba(255,255,255,0.15);
+  }
+
+  button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background-color: #00c8ff;
+    color: #111;
+    font-weight: bold;
+    font-size: 1em;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  button:hover {
+    background-color: #1be0ff;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    font-size: 0.85em;
+    color: #fff;
+  }
+
+  th, td {
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 6px;
+    text-align: center;
+  }
+
+  th {
+    background: rgba(0,200,255,0.3);
+    color: #fff;
+  }
+
+  canvas {
+    margin-top: 20px;
+    background: rgba(0,0,0,0.5);
+    border-radius: 8px;
+  }
+
+  .logo-kampus {
+    position: fixed;
+    top: 15px;
+    right: 20px;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #fff;
+    padding: 5px;
+    box-shadow: 0 0 10px rgba(0,200,255,0.7);
+    transition: 0.3s;
+  }
+
+  .logo-kampus:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0,200,255,1);
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 20px; }
+    h1 { font-size: 1.3em; }
+    .logo-kampus { width: 55px; height: 55px; top: 10px; right: 10px; }
+  }
+</style>
+</head>
+
+<body>
+<!-- 🔹 Logo Universitas -->
+<a href="https://president.ac.id" target="_blank">
+  <img src="logopu.jpg" alt="Logo Universitas" class="logo-kampus">
+</a>
+
+<div class="container">
+  <h1>🔹 Kalkulator Newton–Raphson</h1>
+
+  <label for="mode">Pilih Mode Input:</label>
+  <select id="mode" onchange="gantiMode()">
+    <option value="titik">3 Titik</option>
+    <option value="koef">Koefisien (a, b, c)</option>
+  </select>
+
+  <!-- Mode Titik -->
+  <div id="inputTitik">
+    <h3>Masukkan 3 Titik</h3>
+    <label>Titik 1</label>
+    <input id="x1" type="number" step="any" placeholder="x1">
+    <input id="y1" type="number" step="any" placeholder="y1">
+    <label>Titik 2</label>
+    <input id="x2" type="number" step="any" placeholder="x2">
+    <input id="y2" type="number" step="any" placeholder="y2">
+    <label>Titik 3</label>
+    <input id="x3" type="number" step="any" placeholder="x3">
+    <input id="y3" type="number" step="any" placeholder="y3">
+  </div>
+
+  <!-- Mode Koefisien -->
+  <div id="inputKoef" style="display:none;">
+    <h3>Masukkan Koefisien</h3>
+    <label>a:</label><input id="a" type="number" step="any" placeholder="Contoh: 1">
+    <label>b:</label><input id="b" type="number" step="any" placeholder="Contoh: -3">
+    <label>c:</label><input id="c" type="number" step="any" placeholder="Contoh: 2">
+  </div>
+
+  <h3>Parameter Iterasi</h3>
+  <label>x₀:</label><input id="x0" type="number" step="any" value="1">
+  <label>Toleransi:</label><input id="tol" type="number" step="any" value="0.0001">
+  <label>Iterasi Maksimum:</label><input id="maxIter" type="number" value="10">
+
+  <button onclick="hitungAkar()">Hitung Akar</button>
+
+  <div id="hasil"></div>
+  <canvas id="grafikFungsi" height="250"></canvas>
+  <canvas id="grafikIterasi" height="200"></canvas>
+</div>
+
+<script>
+let chartFungsi, chartIterasi;
+
+function gantiMode() {
+  const mode = document.getElementById("mode").value;
+  document.getElementById("inputTitik").style.display = mode === "titik" ? "block" : "none";
+  document.getElementById("inputKoef").style.display = mode === "koef" ? "block" : "none";
+}
+
+function hitungAkar() {
+  const mode = document.getElementById("mode").value;
+  let a, b, c;
+
+  if (mode === "titik") {
+    const x1 = parseFloat(document.getElementById("x1").value);
+    const y1 = parseFloat(document.getElementById("y1").value);
+    const x2 = parseFloat(document.getElementById("x2").value);
+    const y2 = parseFloat(document.getElementById("y2").value);
+    const x3 = parseFloat(document.getElementById("x3").value);
+    const y3 = parseFloat(document.getElementById("y3").value);
+
+    if ([x1, y1, x2, y2, x3, y3].some(isNaN)) return alert("Isi semua titik dengan benar.");
+
+    a = ((y3 - y1)*(x2 - x1) - (y2 - y1)*(x3 - x1)) /
+        ((x3**2 - x1**2)*(x2 - x1) - (x2**2 - x1**2)*(x3 - x1));
+    b = ((y2 - y1) - a*(x2**2 - x1**2)) / (x2 - x1);
+    c = y1 - a*x1**2 - b*x1;
+
+  } else {
+    a = parseFloat(document.getElementById("a").value);
+    b = parseFloat(document.getElementById("b").value);
+    c = parseFloat(document.getElementById("c").value);
+
+    if ([a, b, c].some(isNaN)) return alert("Isi semua koefisien dengan benar.");
+  }
+
+  const f = x => a*x**2 + b*x + c;
+  const df = x => 2*a*x + b;
+  let xi = parseFloat(document.getElementById("x0").value);
+  const tol = parseFloat(document.getElementById("tol").value);
+  const maxIter = parseInt(document.getElementById("maxIter").value);
+
+  let iterasi = [], error = 1, i = 0;
+  while (error > tol && i < maxIter) {
+    const fxi = f(xi);
+    const dfxi = df(xi);
+    const xi_next = xi - fxi / dfxi;
+    error = Math.abs((xi_next - xi) / xi_next);
+    iterasi.push({i: i+1, xi, fxi, dfxi, xi_next, error});
+    xi = xi_next; i++;
+  }
+
+  const akar = xi;
+  const hasilHTML = `
+    <h3>Hasil Iterasi</h3>
+    <p>f(x) = ${a.toFixed(4)}x² + ${b.toFixed(4)}x + ${c.toFixed(4)}</p>
+    <table>
+      <tr><th>Iterasi</th><th>xᵢ</th><th>f(xᵢ)</th><th>f'(xᵢ)</th><th>xᵢ₊₁</th><th>Error</th></tr>
+      ${iterasi.map(r => `
+        <tr>
+          <td>${r.i}</td>
+          <td>${r.xi.toFixed(6)}</td>
+          <td>${r.fxi.toExponential(3)}</td>
+          <td>${r.dfxi.toExponential(3)}</td>
+          <td>${r.xi_next.toFixed(6)}</td>
+          <td>${r.error.toExponential(3)}</td>
+        </tr>`).join("")}
+    </table>
+    <p><b>Akar Hampiran:</b> x ≈ ${akar.toFixed(6)} (setelah ${i} iterasi)</p>`;
+  document.getElementById("hasil").innerHTML = hasilHTML;
+
+  // === Grafik f(x) + titik akar + label merah ===
+  const xs = [], ys = [];
+  for (let x = -10; x <= 10; x += 0.1) { xs.push(x); ys.push(f(x)); }
+
+  const ctx1 = document.getElementById('grafikFungsi').getContext('2d');
+  if (chartFungsi) chartFungsi.destroy();
+  chartFungsi = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: xs,
+      datasets: [
+        { label: 'f(x)', data: ys, borderColor:'#00c8ff', borderWidth:2, fill:false },
+        { label: 'Sumbu X', data: xs.map(()=>0), borderColor:'#888', borderDash:[5,5], fill:false },
+        { label: 'Akar', data: [{x: akar, y: f(akar)}], backgroundColor:'red', pointRadius:7, showLine:false, type:'scatter' }
+      ]
+    },
+    options: {
+      plugins: {
+        legend: { display: true },
+        annotation: {
+          annotations: {
+            labelAkar: {
+              type: 'label',
+              xValue: akar,
+              yValue: f(akar),
+              backgroundColor: 'rgba(0,0,0,0.7)',
+              borderRadius: 4,
+              borderWidth: 0,
+              color: 'red',
+              content: ['akar = ' + akar.toFixed(5)],
+              font: { size: 12, weight: 'bold' },
+              yAdjust: -20
+            }
+          }
+        }
+      },
+      scales: { x: { ticks:{color:'#ccc'} }, y:{ ticks:{color:'#ccc'} } }
+    }
+  });
+
+  // === Grafik konvergensi ===
+  const ctx2 = document.getElementById('grafikIterasi').getContext('2d');
+  if (chartIterasi) chartIterasi.destroy();
+  chartIterasi = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: iterasi.map(r=>r.i),
+      datasets:[{label:'Nilai x per Iterasi', data: iterasi.map(r=>r.xi_next), borderColor:'#ffcc00', borderWidth:2, fill:false}]
+    },
+    options:{plugins:{legend:{display:true}},scales:{x:{ticks:{color:'#ccc'}},y:{ticks:{color:'#ccc'}}}}
+  });
+}
+</script>
+</body>
+</html>
